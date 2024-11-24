@@ -3,7 +3,7 @@ import { Product } from "./Sidebar";
 import { Tally3 } from "lucide-react";
 import axios from "axios";
 import BookCard from "./BookCard";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 const MainContent = () => {
   const { searchQuery, selectedCategory, minPrice, maxPrice, selectedKeyword } =
@@ -37,14 +37,14 @@ const MainContent = () => {
         const response = await axios.get(url);
         setAllProducts(response.data.products);
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching products", error);
       }
     };
 
     fetchAllProducts();
   }, [selectedKeyword]);
 
-  const getFilteredProducts = () => {
+  const getFilteredProducts = useMemo(() => {
     let filteredProducts = [...allProducts];
 
     if (selectedCategory) {
@@ -81,14 +81,12 @@ const MainContent = () => {
       default:
         return filteredProducts;
     }
-  };
+  }, [allProducts, selectedCategory, minPrice, maxPrice, searchQuery, filter]);
 
-  const filteredProducts = getFilteredProducts();
-
-  const totalProducts = filteredProducts.length;
+  const totalProducts = getFilteredProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
 
-  const paginatedProducts = filteredProducts.slice(
+  const paginatedProducts = getFilteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -119,13 +117,14 @@ const MainContent = () => {
   };
 
   return (
-    <section className="xl:w-[55rem] mr-[10rem] lg:w-[45rem] sm:w-[40rem] xs:w-[20rem] p-5">
+    <section className="xl:w-[55rem]  lg:w-[45rem] sm:w-[100%] xs:w-[20rem] p-5">
       <div className="mb-5">
-        <div className="flex flex-col sm:flex-row justify-between items-center">
-          <div className="relative mb-5 mt-5">
+        <div className="flex flex-row justify-end">
+          <div className="relative mb-5">
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="border px-4 py-2 rounded-full flex items-center"
+              aria-label="Filter products"
             >
               <Tally3 className="mr-2" />
               {filter === "all"
@@ -138,7 +137,7 @@ const MainContent = () => {
                   onClick={() => {
                     setCurrentPage(1);
                     setFilter("cheap");
-                    setDropdownOpen(!dropdownOpen);
+                    setDropdownOpen(false);
                   }}
                   className="block px-4 py-2 w-full text-left hover:bg-gray-200"
                 >
@@ -148,7 +147,7 @@ const MainContent = () => {
                   onClick={() => {
                     setCurrentPage(1);
                     setFilter("expensive");
-                    setDropdownOpen(!dropdownOpen);
+                    setDropdownOpen(false);
                   }}
                   className="block px-4 py-2 w-full text-left hover:bg-gray-200"
                 >
@@ -158,7 +157,7 @@ const MainContent = () => {
                   onClick={() => {
                     setCurrentPage(1);
                     setFilter("popular");
-                    setDropdownOpen(!dropdownOpen);
+                    setDropdownOpen(false);
                   }}
                   className="block px-4 py-2 w-full text-left hover:bg-gray-200"
                 >
@@ -168,35 +167,42 @@ const MainContent = () => {
             )}
           </div>
         </div>
-        <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-5">
-          {paginatedProducts.map((product, index) => (
-            <BookCard
-              key={index}
-              id={product.id}
-              title={product.title}
-              thumbnail={product.thumbnail}
-              price={product.price}
-            />
-          ))}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {paginatedProducts.length > 0 ? (
+            paginatedProducts.map((product) => (
+              <BookCard
+                key={product.id}
+                id={product.id}
+                title={product.title}
+                thumbnail={product.thumbnail}
+                price={product.price}
+              />
+            ))
+          ) : (
+            <p>No products found matching your criteria.</p>
+          )}
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mt-5">
+        <div className="flex flex-row justify-between items-center mt-5">
           <button
             className="border px-4 py-2 mx-2 rounded-full"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
+            aria-label="Previous page"
           >
             Previous
           </button>
 
           <div className="flex flex-wrap justify-center">
-            {getPaginationButtons().map((page, index) => (
+            {getPaginationButtons().map((page) => (
               <button
-                key={index}
+                key={page}
                 onClick={() => handlePageChange(page)}
                 className={`border px-4 py-2 mx-1 rounded-full ${
                   page === currentPage ? "bg-black text-white" : ""
                 }`}
+                aria-label={`Go to page ${page}`}
               >
                 {page}
               </button>
@@ -207,6 +213,7 @@ const MainContent = () => {
             className="border px-4 py-2 mx-2 rounded-full"
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
+            aria-label="Next page"
           >
             Next
           </button>
