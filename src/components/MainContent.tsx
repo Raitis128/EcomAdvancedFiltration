@@ -1,39 +1,51 @@
-import { useEffect, useState } from "react";
 import { useFilter } from "../hooks/useFilter";
 import { Product } from "./Sidebar";
 import { Tally3 } from "lucide-react";
 import axios from "axios";
 import BookCard from "./BookCard";
+import { useEffect, useState } from "react";
 
 const MainContent = () => {
   const { searchQuery, selectedCategory, minPrice, maxPrice, selectedKeyword } =
     useFilter();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [filter, setFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const itemsPerPage = 12;
 
   useEffect(() => {
-    let url = `https://dummyjson.com/products?limit=${itemsPerPage}&skip=${
-      (currentPage - 1) * itemsPerPage
-    }`;
+    setCurrentPage(1);
+  }, [
+    searchQuery,
+    selectedCategory,
+    minPrice,
+    maxPrice,
+    selectedKeyword,
+    filter,
+  ]);
 
-    if (selectedKeyword) {
-      url = `https://dummyjson.com/products/search?q=${selectedKeyword}`;
-    }
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      try {
+        let url = "https://dummyjson.com/products?limit=300";
+        if (selectedKeyword) {
+          url = `https://dummyjson.com/products/search?q=${selectedKeyword}`;
+        }
 
-    axios
-      .get(url)
-      .then((response) => {
-        setProducts(response.data.products);
-      })
-      .catch((error) => console.log(error));
-  }, [currentPage, selectedKeyword]);
+        const response = await axios.get(url);
+        setAllProducts(response.data.products);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchAllProducts();
+  }, [selectedKeyword]);
 
   const getFilteredProducts = () => {
-    let filteredProducts = products;
+    let filteredProducts = [...allProducts];
 
     if (selectedCategory) {
       filteredProducts = filteredProducts.filter(
@@ -73,8 +85,13 @@ const MainContent = () => {
 
   const filteredProducts = getFilteredProducts();
 
-  const totalProducts = 100;
+  const totalProducts = filteredProducts.length;
   const totalPages = Math.ceil(totalProducts / itemsPerPage);
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handlePageChange = (page: number) => {
     if (page > 0 && page <= totalPages) {
@@ -113,12 +130,13 @@ const MainContent = () => {
               <Tally3 className="mr-2" />
               {filter === "all"
                 ? "Filter"
-                : filter.charAt(0).toLowerCase() + filter.slice(1)}
+                : filter.charAt(0).toUpperCase() + filter.slice(1)}
             </button>
             {dropdownOpen && (
               <div className="absolute bg-white border border-gray-300 rounded mt-2 w-full sm:w-40">
                 <button
                   onClick={() => {
+                    setCurrentPage(1);
                     setFilter("cheap");
                     setDropdownOpen(!dropdownOpen);
                   }}
@@ -128,6 +146,7 @@ const MainContent = () => {
                 </button>
                 <button
                   onClick={() => {
+                    setCurrentPage(1);
                     setFilter("expensive");
                     setDropdownOpen(!dropdownOpen);
                   }}
@@ -137,6 +156,7 @@ const MainContent = () => {
                 </button>
                 <button
                   onClick={() => {
+                    setCurrentPage(1);
                     setFilter("popular");
                     setDropdownOpen(!dropdownOpen);
                   }}
@@ -149,7 +169,7 @@ const MainContent = () => {
           </div>
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-3 md:grid-cols-4 gap-5">
-          {filteredProducts.map((product, index) => (
+          {paginatedProducts.map((product, index) => (
             <BookCard
               key={index}
               id={product.id}
