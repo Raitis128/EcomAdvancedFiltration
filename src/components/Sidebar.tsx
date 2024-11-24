@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useFilter } from "../hooks/useFilter";
 
-interface Product {
+export interface Product {
   category: string;
+  price: number;
+  title: string;
+  rating: number;
 }
 
 interface FetchResponse {
@@ -19,7 +22,6 @@ const Sidebar = () => {
     setMinPrice,
     maxPrice,
     setMaxPrice,
-    selectedKeyword,
     setSelectedKeyword,
   } = useFilter();
 
