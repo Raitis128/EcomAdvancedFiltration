@@ -28,7 +28,6 @@ const MainContent = () => {
       .get(url)
       .then((response) => {
         setProducts(response.data.products);
-        console.log(response.data.products);
       })
       .catch((error) => console.log(error));
   }, [currentPage, selectedKeyword]);
