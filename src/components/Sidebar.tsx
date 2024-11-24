@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import { useFilter } from "../hooks/useFilter";
 
 export interface Product {
+  id: number;
   category: string;
   price: number;
   title: string;
   rating: number;
+  thumbnail: string;
+  image: string;
 }
 
 interface FetchResponse {
